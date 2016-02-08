@@ -1,0 +1,8 @@
+[package]
+name = "anyvec"
+description = "Vector-like type for storing different types in contagious memory."
+version = "0.1.0"
+documentation = "http://lschmierer.github.io/anyvec/"
+repository = "https://github.com/lschmierer/anyvec"
+license = "MIT OR Apache-2.0"
+authors = ["Lukas Schmierer <lukas.schmierer@lschmierer.de>"]
