@@ -1,5 +1,4 @@
 use std::result::Result;
-use std::collections::HashMap;
 use std::cmp;
 use std::any::{Any, TypeId};
 use std::mem;
@@ -8,12 +7,12 @@ use std::ptr;
 struct AnyMeta {
     data_index: usize,
     type_id: TypeId,
+    type_size: usize,
 }
 
 pub struct AnyVec {
     data: Vec<u8>,
     meta: Vec<AnyMeta>,
-    type_sizes: HashMap<TypeId, usize>,
 }
 
 impl AnyVec {
@@ -21,7 +20,6 @@ impl AnyVec {
         AnyVec {
             data: Vec::new(),
             meta: Vec::new(),
-            type_sizes: HashMap::new(),
         }
     }
 
@@ -29,7 +27,6 @@ impl AnyVec {
         AnyVec {
             data: Vec::with_capacity(capacity * avg_type_size),
             meta: Vec::with_capacity(capacity),
-            type_sizes: HashMap::new(),
         }
     }
 
@@ -76,9 +73,8 @@ impl AnyVec {
                          AnyMeta {
                              data_index: data_index,
                              type_id: type_id,
+                             type_size: type_size,
                          });
-
-        self.type_sizes.insert(type_id, type_size);
 
         self.data.reserve(type_size);
 
@@ -95,7 +91,7 @@ impl AnyVec {
     }
 
     pub fn remove(&mut self, index: usize) {
-        let type_size = self.type_sizes.get(&self.meta[index].type_id).unwrap().clone();
+        let type_size = self.meta[index].type_size;
 
         for _ in 0..type_size {
             self.data.remove(self.meta[index].data_index);
@@ -162,7 +158,7 @@ impl AnyVec {
         } else {
             unsafe {
                 let element = ptr::read(&self.data[meta.data_index] as *const _ as *const T);
-                let new_len = self.data.len() - self.type_sizes.get(&meta.type_id).unwrap();
+                let new_len = self.data.len() - meta.type_size;
                 self.data.set_len(new_len);
                 Ok(Some(element))
             }
@@ -176,11 +172,6 @@ impl AnyVec {
         for meta in self.meta.iter_mut().skip(org_meta_size) {
             meta.data_index += self.data.len();
         }
-
-        for (type_id, type_size) in other.type_sizes.drain() {
-            self.type_sizes.insert(type_id, type_size);
-        }
-        other.type_sizes.clear();
 
         self.data.append(&mut other.data);
     }
@@ -201,18 +192,14 @@ impl AnyVec {
     pub fn split_off(&mut self, at: usize) -> Self {
         let other_data = self.data.split_off(self.meta[at].data_index);
         let mut other_meta = self.meta.split_off(at);
-        let mut other_type_sizes = HashMap::<TypeId, usize>::new();
 
         for meta in other_meta.iter_mut() {
             meta.data_index -= self.data.len();
-            other_type_sizes.insert(meta.type_id,
-                                    self.type_sizes.get(&meta.type_id).unwrap().clone());
         }
 
         AnyVec {
             data: other_data,
             meta: other_meta,
-            type_sizes: other_type_sizes,
         }
     }
 }
