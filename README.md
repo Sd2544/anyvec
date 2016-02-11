@@ -1,6 +1,6 @@
 # AnyVec
 [![Build Status](https://travis-ci.org/lschmierer/anyvec.svg)](https://travis-ci.org/lschmierer/anyvec)
-[![Crates.io](http://meritbadge.herokuapp.com/anyvec)](https://crates.io/crates/sacn)
+[![Crates.io](http://meritbadge.herokuapp.com/anyvec)](https://crates.io/crates/anyvec)
 
 [Documentation](http://lschmierer.github.io/anyvec/)
 
