@@ -90,17 +90,37 @@ impl AnyVec {
         }
     }
 
-    pub fn remove(&mut self, index: usize) {
+    pub fn remove<T: Any>(&mut self, index: usize) -> Result<T, String> {
+        let type_id = self.meta[index].type_id;
         let type_size = self.meta[index].type_size;
+        let data_index = self.meta[index].data_index;
 
-        for _ in 0..type_size {
-            self.data.remove(self.meta[index].data_index);
+        if type_id != TypeId::of::<T>() {
+            return Err(format!("invalid type {:?}, expected {:?}",
+                               TypeId::of::<T>(),
+                               &self.meta[self.meta.len() - 1].type_id));
         }
-        self.meta.remove(index);
 
+        self.meta.remove(index);
         for i in index..self.meta.len() {
             self.meta[i].data_index -= type_size;
         }
+
+        unsafe {
+            let mut vec = Vec::with_capacity(type_size);
+
+            ptr::copy(self.data.as_mut_ptr().offset(data_index as isize),
+                      vec.as_mut_ptr(),
+                      type_size);
+            ptr::copy(self.data.as_mut_ptr().offset((data_index + type_size) as isize),
+                      self.data.as_mut_ptr().offset(data_index as isize),
+                      self.data.len() - (data_index + type_size));
+            let new_len = self.data.len() - type_size;
+            self.data.set_len(new_len);
+
+            Ok(ptr::read(vec.as_ptr() as *const T))
+        }
+
     }
 
     pub fn is<T: Any>(&self, index: usize) -> Option<bool> {
@@ -147,20 +167,13 @@ impl AnyVec {
     }
 
     pub fn pop<T: Any>(&mut self) -> Result<Option<T>, String> {
-        let meta = match self.meta.pop() {
-            Some(meta) => meta,
-            None => return Ok(None),
-        };
-        if meta.type_id != TypeId::of::<T>() {
-            Err(format!("invalid type {:?}, expected {:?}",
-                        TypeId::of::<T>(),
-                        &self.meta[self.meta.len() - 1].type_id))
+        if self.is_empty() {
+            Ok(None)
         } else {
-            unsafe {
-                let element = ptr::read(&self.data[meta.data_index] as *const _ as *const T);
-                let new_len = self.data.len() - meta.type_size;
-                self.data.set_len(new_len);
-                Ok(Some(element))
+            let index = self.meta.len() - 1;
+            match self.remove(index) {
+                Ok(element) => Ok(Some(element)),
+                Err(err) => Err(err),
             }
         }
     }
@@ -331,11 +344,11 @@ mod tests {
         vec.insert(0, TestData { a: 0, b: "Test" });
         vec.insert(3, TestData { a: 3, b: "Test" });
 
-        vec.remove(2);
+        assert_eq!(vec.remove::<TestData>(2).unwrap().a, 2);
         assert_eq!(vec.get::<TestData>(0).unwrap().unwrap().a, 0);
-        vec.remove(1);
+        assert_eq!(vec.remove::<TestData>(1).unwrap().a, 1);
         assert_eq!(vec.get::<TestData>(0).unwrap().unwrap().a, 0);
-        vec.remove(0);
+        assert_eq!(vec.remove::<TestData>(0).unwrap().a, 0);
         assert_eq!(vec.get::<TestData>(0).unwrap().unwrap().a, 3);
     }
 
