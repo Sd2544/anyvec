@@ -4,9 +4,10 @@
 
 [Documentation](http://lschmierer.github.io/anyvec/)
 
-Stores any Rust object that implements the `Any` trait in contagious memory.
+A growable list type with dynamic typing.
+It can store anything that implements the `Any` trait.
 
-About 4 to 5 times slower on getting values and much slower on inserting.
+About 4 to 5 times slower than `Vec<T>`.
 
 ## Usage
 
@@ -18,7 +19,7 @@ Add to `Cargo.toml`:
 anyvec = "0.1.0"
 ```
 
-Create a DmxSource and start sending DMX data to a universe.
+Usage:
 
 ```rust
 extern crate anyvec;
