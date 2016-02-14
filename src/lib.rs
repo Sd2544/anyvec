@@ -17,6 +17,7 @@ use std::any::{Any, TypeId};
 use std::mem;
 use std::ptr;
 
+#[derive(Debug)]
 struct AnyMeta {
     data_index: usize,
     type_id: TypeId,
@@ -26,6 +27,7 @@ struct AnyMeta {
 /// A growable list type with dynamic typing.
 ///
 /// It can store anything that implements the `Any` trait.
+#[derive(Debug)]
 pub struct AnyVec {
     data: Vec<u8>,
     meta: Vec<AnyMeta>,
