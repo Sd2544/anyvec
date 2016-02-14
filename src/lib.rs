@@ -137,7 +137,7 @@ impl AnyVec {
     ///
     /// # Panics
     /// Panics if `index` is out of bounds.
-    pub fn remove<T: Any>(&mut self, index: usize) -> Result<T, String> {
+    pub fn remove_and_return<T: Any>(&mut self, index: usize) -> Result<T, String> {
         let type_id = self.meta[index].type_id;
         let type_size = self.meta[index].type_size;
         let data_index = self.meta[index].data_index;
@@ -166,6 +166,31 @@ impl AnyVec {
             self.data.set_len(new_len);
 
             Ok(ptr::read(vec.as_ptr() as *const T))
+        }
+
+    }
+
+    /// Removes and returns the element at position `index`.
+    ///
+    /// Shifts elements after position `index` to the left.
+    ///
+    /// # Panics
+    /// Panics if `index` is out of bounds.
+    pub fn remove(&mut self, index: usize) {
+        let type_size = self.meta[index].type_size;
+        let data_index = self.meta[index].data_index;
+
+        self.meta.remove(index);
+        for i in index..self.meta.len() {
+            self.meta[i].data_index -= type_size;
+        }
+
+        unsafe {
+            ptr::copy(self.data.as_mut_ptr().offset((data_index + type_size) as isize),
+                      self.data.as_mut_ptr().offset(data_index as isize),
+                      self.data.len() - (data_index + type_size));
+            let new_len = self.data.len() - type_size;
+            self.data.set_len(new_len);
         }
 
     }
@@ -228,7 +253,7 @@ impl AnyVec {
             Ok(None)
         } else {
             let index = self.meta.len() - 1;
-            match self.remove(index) {
+            match self.remove_and_return(index) {
                 Ok(element) => Ok(Some(element)),
                 Err(err) => Err(err),
             }
@@ -405,6 +430,22 @@ mod tests {
     }
 
     #[test]
+    fn remove_and_return() {
+        let mut vec = AnyVec::new();
+        vec.insert(0, TestData { a: 1, b: "Test" });
+        vec.insert(1, TestData { a: 2, b: "Test" });
+        vec.insert(0, TestData { a: 0, b: "Test" });
+        vec.insert(3, TestData { a: 3, b: "Test" });
+
+        assert_eq!(vec.remove_and_return::<TestData>(2).unwrap().a, 2);
+        assert_eq!(vec.get::<TestData>(0).unwrap().unwrap().a, 0);
+        assert_eq!(vec.remove_and_return::<TestData>(1).unwrap().a, 1);
+        assert_eq!(vec.get::<TestData>(0).unwrap().unwrap().a, 0);
+        assert_eq!(vec.remove_and_return::<TestData>(0).unwrap().a, 0);
+        assert_eq!(vec.get::<TestData>(0).unwrap().unwrap().a, 3);
+    }
+
+    #[test]
     fn remove() {
         let mut vec = AnyVec::new();
         vec.insert(0, TestData { a: 1, b: "Test" });
@@ -412,11 +453,11 @@ mod tests {
         vec.insert(0, TestData { a: 0, b: "Test" });
         vec.insert(3, TestData { a: 3, b: "Test" });
 
-        assert_eq!(vec.remove::<TestData>(2).unwrap().a, 2);
+        vec.remove(2);
         assert_eq!(vec.get::<TestData>(0).unwrap().unwrap().a, 0);
-        assert_eq!(vec.remove::<TestData>(1).unwrap().a, 1);
+        vec.remove(1);
         assert_eq!(vec.get::<TestData>(0).unwrap().unwrap().a, 0);
-        assert_eq!(vec.remove::<TestData>(0).unwrap().a, 0);
+        vec.remove(0);
         assert_eq!(vec.get::<TestData>(0).unwrap().unwrap().a, 3);
     }
 

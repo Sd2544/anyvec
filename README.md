@@ -16,7 +16,7 @@ Add to `Cargo.toml`:
 ```toml
 [dependencies]
 
-anyvec = "0.1.0"
+anyvec = "0.2.0"
 ```
 
 Usage:
