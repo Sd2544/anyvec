@@ -29,7 +29,7 @@ let mut vec = AnyVec::new();
 
 vec.push("Test");
 
-assert_eq!(vec.get::<TestData>(0).unwrap().unwrap(), "Test");
+assert_eq!(vec.get::<&str>(0).unwrap().unwrap(), "Test");
 ```
 
 
