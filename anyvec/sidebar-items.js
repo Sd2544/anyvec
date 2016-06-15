@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["AnyVec","A growable list type with dynamic typing."]]});
