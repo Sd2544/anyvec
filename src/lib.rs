@@ -112,22 +112,30 @@ impl AnyVec {
         for i in index..self.meta.len() {
             self.meta[i].data_index += type_size;
         }
-        self.meta.insert(index,
-                         AnyMeta {
-                             data_index: data_index,
-                             type_id: type_id,
-                             type_size: type_size,
-                         });
+        self.meta.insert(
+            index,
+            AnyMeta {
+                data_index: data_index,
+                type_id: type_id,
+                type_size: type_size,
+            },
+        );
 
         self.data.reserve(type_size);
 
         unsafe {
-            ptr::copy(self.data.as_mut_ptr().offset(data_index as isize),
-                      self.data.as_mut_ptr().offset((data_index + type_size) as isize),
-                      self.data.len() - data_index);
-            ptr::copy(&element as *const _ as *const _,
-                      self.data.as_mut_ptr().offset(data_index as isize),
-                      type_size);
+            ptr::copy(
+                self.data.as_mut_ptr().offset(data_index as isize),
+                self.data.as_mut_ptr().offset(
+                    (data_index + type_size) as isize,
+                ),
+                self.data.len() - data_index,
+            );
+            ptr::copy(
+                &element as *const _ as *const _,
+                self.data.as_mut_ptr().offset(data_index as isize),
+                type_size,
+            );
             let new_len = self.data.len() + type_size;
             self.data.set_len(new_len);
         }
@@ -145,9 +153,11 @@ impl AnyVec {
         let data_index = self.meta[index].data_index;
 
         if type_id != TypeId::of::<T>() {
-            return Err(format!("invalid type {:?}, expected {:?}",
-                               TypeId::of::<T>(),
-                               &self.meta[self.meta.len() - 1].type_id));
+            return Err(format!(
+                "invalid type {:?}, expected {:?}",
+                TypeId::of::<T>(),
+                &self.meta[self.meta.len() - 1].type_id
+            ));
         }
 
         self.meta.remove(index);
@@ -158,12 +168,18 @@ impl AnyVec {
         unsafe {
             let mut vec = Vec::with_capacity(type_size);
 
-            ptr::copy(self.data.as_mut_ptr().offset(data_index as isize),
-                      vec.as_mut_ptr(),
-                      type_size);
-            ptr::copy(self.data.as_mut_ptr().offset((data_index + type_size) as isize),
-                      self.data.as_mut_ptr().offset(data_index as isize),
-                      self.data.len() - (data_index + type_size));
+            ptr::copy(
+                self.data.as_mut_ptr().offset(data_index as isize),
+                vec.as_mut_ptr(),
+                type_size,
+            );
+            ptr::copy(
+                self.data.as_mut_ptr().offset(
+                    (data_index + type_size) as isize,
+                ),
+                self.data.as_mut_ptr().offset(data_index as isize),
+                self.data.len() - (data_index + type_size),
+            );
             let new_len = self.data.len() - type_size;
             self.data.set_len(new_len);
 
@@ -188,9 +204,13 @@ impl AnyVec {
         }
 
         unsafe {
-            ptr::copy(self.data.as_mut_ptr().offset((data_index + type_size) as isize),
-                      self.data.as_mut_ptr().offset(data_index as isize),
-                      self.data.len() - (data_index + type_size));
+            ptr::copy(
+                self.data.as_mut_ptr().offset(
+                    (data_index + type_size) as isize,
+                ),
+                self.data.as_mut_ptr().offset(data_index as isize),
+                self.data.len() - (data_index + type_size),
+            );
             let new_len = self.data.len() - type_size;
             self.data.set_len(new_len);
         }
@@ -214,11 +234,17 @@ impl AnyVec {
             None => return Ok(None),
         };
         if meta.type_id != TypeId::of::<T>() {
-            Err(format!("invalid type {:?}, expected {:?}",
-                        TypeId::of::<T>(),
-                        meta.type_id))
+            Err(format!(
+                "invalid type {:?}, expected {:?}",
+                TypeId::of::<T>(),
+                meta.type_id
+            ))
         } else {
-            unsafe { Ok(Some(ptr::read(&&self.data[meta.data_index] as *const _ as *const &T))) }
+            unsafe {
+                Ok(Some(ptr::read(
+                    &&self.data[meta.data_index] as *const _ as *const &T,
+                )))
+            }
         }
     }
 
@@ -230,12 +256,16 @@ impl AnyVec {
             None => return Ok(None),
         };
         if meta.type_id != TypeId::of::<T>() {
-            Err(format!("invalid type {:?}, expected {:?}",
-                        TypeId::of::<T>(),
-                        meta.type_id))
+            Err(format!(
+                "invalid type {:?}, expected {:?}",
+                TypeId::of::<T>(),
+                meta.type_id
+            ))
         } else {
             unsafe {
-                Ok(Some(ptr::read(&&self.data[meta.data_index] as *const _ as *const &mut T)))
+                Ok(Some(ptr::read(
+                    &&self.data[meta.data_index] as *const _ as *const &mut T,
+                )))
             }
         }
     }

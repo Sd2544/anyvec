@@ -12,10 +12,8 @@ fn get(b: &mut Bencher) {
     for _ in 0..1000 {
         vec.push("Test");
     }
-    b.iter(|| {
-        for i in 0..vec.len() {
-            test::black_box(vec.get::<&str>(i).unwrap().unwrap().len());
-        }
+    b.iter(|| for i in 0..vec.len() {
+        test::black_box(vec.get::<&str>(i).unwrap().unwrap().len());
     });
 }
 
@@ -25,9 +23,7 @@ fn std_vec_get(b: &mut Bencher) {
     for _ in 0..1000 {
         vec.push("Test");
     }
-    b.iter(|| {
-        for i in 0..vec.len() {
-            test::black_box(vec.get(i).unwrap().len());
-        }
+    b.iter(|| for i in 0..vec.len() {
+        test::black_box(vec.get(i).unwrap().len());
     });
 }

@@ -1,8 +1,8 @@
 # AnyVec
 [![Build Status](https://travis-ci.org/lschmierer/anyvec.svg)](https://travis-ci.org/lschmierer/anyvec)
-[![Crates.io](http://meritbadge.herokuapp.com/anyvec)](https://crates.io/crates/anyvec)
+[![Crates.io](https://img.shields.io/crates/v/anyvec.svg)](https://crates.io/crates/anyvec)
 
-[Documentation](http://lschmierer.github.io/anyvec/)
+[Documentation](https://docs.rs/anyvec/)
 
 A growable list type with dynamic typing.
 It can store anything that implements the `Any` trait.
